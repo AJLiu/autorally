@@ -33,12 +33,12 @@ limitations under the License.
 
   <arg name="num_runs" default="1"/>
 
-  <node name="autorally_random_pose" pkg="autorally_gazebo"
+  <node name="autorally_random_pose" pkg="experiments"
         type="autorally_random_pose.py" output="screen">
     <param name="num_runs" value="$(arg num_runs)"/>
     <param name="x_origin" value="0"/>
     <param name="y_origin" value="-8.5"/>
-    <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)maps/marietta_costmap_09_08_2018.npz"/>
+    <param name="map_path" value="$(env AR_MPPI_PARAMS_PATH)maps/gazebo_costmap_01_08_2019.npz"/>
     <param name="image_left_topic" value="/left_camera/image_raw"/>
     <param name="image_right_topic" value="/right_camera/image_raw"/>
   </node>

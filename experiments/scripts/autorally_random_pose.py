@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-import logging
 import os
-import sys
 from gazebo_msgs.srv import GetModelState, SetModelState
 from gazebo_msgs.msg import ModelState
 from geometry_msgs.msg import Pose, Twist
@@ -13,23 +11,10 @@ import random
 import math
 import numpy as np
 import ros_numpy
+import logging
 from sensor_msgs.msg import Image
 
-
-def setup_log(log_name):
-    """Initializes handlers for logging"""
-    logger = logging.getLogger(log_name)
-    logger.setLevel(logging.DEBUG)
-    # fh = logging.FileHandler(path + log_name)
-    # fh.setLevel(logging.INFO)
-    formatter = logging.Formatter('[%(name)s] %(message)s')
-    # fh.setFormatter(formatter)
-    # logger.addHandler(fh)
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.INFO)
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
-    return logger
+from util import setup_log, is_costmap_free
 
 def set_pose(pose, x, y, yaw):
     """Converts yaw into quaternion coordinates and assigns the values to a pose object"""
@@ -41,20 +26,6 @@ def set_pose(pose, x, y, yaw):
     pose.orientation.y = qy
     pose.orientation.z = qz
     pose.orientation.w = qw
-
-def is_free(x, y, size):
-    """Return True if the square of length 'size' centered at (x,y) does not 
-    contain an obstacle"""
-
-    if x is None or y is None:
-        return False
-
-    _x = int((x + 15) * ppm)
-    _y = int((y + 15) * ppm)
-    _size = int(size * ppm / 2.0)
-
-    free = np.all(cost_map[_y-_size : _y+_size, _x-_size : _x+_size] < 1)
-    return free
 
 def image_left_callback(msg):
     global image_left
@@ -82,17 +53,17 @@ def main():
     time.sleep(1)
 
     for i in range(num_runs):
-        x,y = None, None
+        x,y = -50, -50
         yaw = random.uniform(0, 2*math.pi)
 
         # Spawn in a random free position in the track
-        while not is_free(x,y,1):           
+        while not is_costmap_free(cost_map, (x, y), 1, x_min = x_min, y_min = y_min, ppm = ppm):
             x = random.uniform(-15, 15)
             y = random.uniform(-15, 15)
 
-        logger.info('{}: global({: >6.2f},{: >6.2f}) : {}'.format( \
-                    i, x, y, is_free(x, y, 1)))
-
+                   
+        logger.info('{}: ({: >6.2f},{: >6.2f})'.format( \
+                    i, x, y))
 
         set_pose(pose, x, y, yaw)
         modelstate.pose = pose
@@ -103,7 +74,7 @@ def main():
 
         # Save current image
         data.append([image_left, image_right])
-        time.sleep(.1)
+        time.sleep(1)
 
 
 if __name__ == '__main__':
